@@ -1,4 +1,5 @@
-﻿using MapHandleSpace;
+﻿using ActorStructureSpace;
+using MapHandleSpace;
 
 namespace CSHARPRPG
 {

@@ -282,14 +282,14 @@ namespace ActorStructureSpace
                 Attack.CurrentCool = Math.Max(0, Attack.CurrentCool - 1);
             }
         }
-        public static void HandleTeleport(Location Destination, ActorStruc Target)
+        public static void HandleTeleport(Location Destination, ActorStruc Target, bool IsPlayer)
         {
             Random random = new Random();
 
-            var TeleportDestinationY = Math.Min(CSHARPRPG.RPGame.MapHeight, Destination.Y);
-            var TeleportDestinationX = Math.Min(CSHARPRPG.RPGame.MapWidth, Destination.X);
+            var TeleportDestinationY = Math.Min(CSHARPRPG.RPGame.MapHeight - 1, Destination.Y);
+            var TeleportDestinationX = Math.Min(CSHARPRPG.RPGame.MapWidth - 1, Destination.X);
 
-            if (Destination.Y == -1 || Destination.X == -1){
+            if (Destination.Y < 0 || Destination.X < 0){
                 TeleportDestinationY = random.Next(0, CSHARPRPG.RPGame.MapHeight);
                 TeleportDestinationX = random.Next(0, CSHARPRPG.RPGame.MapWidth);
             }
@@ -300,19 +300,11 @@ namespace ActorStructureSpace
                 Console.WriteLine("Target's current location could not be found.");
                 return;
             }
-            var WhatIsThere = MapHandler.Map[Destination.Y][Destination.X];
+            var WhatIsThere = MapHandler.Map[TeleportDestinationY][TeleportDestinationX];
+            Location WhatIsThereLocation = WhatIsThere.Location;
             var TargetLocation = TargetCell.Location;
 
-            MapDataStructure MapDataToReplaceEnemy = new MapDataStructure()
-            {
-                LocationID = WhatIsThere.Location.X + WhatIsThere.Location.Y,
-                CanPass = true,
-                Location = new Location() { X = WhatIsThere.Location.X, Y = WhatIsThere.Location.Y },
-                WhatIsHereID = 0,
-                WhatIsHereName = "Air",
-                WhatListToSearch = 2,
-                WhatIsHereRepresentation = "||"
-            };
+            ObjectHandleSpace.ObjectStruc.SetLocationToObject(WhatIsThere.Location, 0);
 
             switch (WhatIsThere.WhatListToSearch)
             {
@@ -328,6 +320,7 @@ namespace ActorStructureSpace
                         else 
                         {
                             ActorHandle.SetLocationToActor(TargetLocation, Target.ActorID);
+                            if (IsPlayer){CSHARPRPG.RPGame.PlayerLocation = new Location(){X = Destination.X,Y = Destination.Y};};
                             Console.WriteLine($"{Target.ActorName} Teleported to X{TargetLocation.X}Y{TargetLocation.Y}");
                         }
                     }     
@@ -344,6 +337,7 @@ namespace ActorStructureSpace
                         else 
                         {
                             ActorHandle.SetLocationToActor(TargetLocation, Target.ActorID);
+                            if (IsPlayer){CSHARPRPG.RPGame.PlayerLocation = new Location(){X = Destination.X,Y = Destination.Y};};
                             Console.WriteLine($"{Target.ActorName} Teleported to X{TargetLocation.X}Y{TargetLocation.Y}");
                         }
                     }     
@@ -360,6 +354,7 @@ namespace ActorStructureSpace
                         else 
                         {
                             ActorHandle.SetLocationToActor(TargetLocation, Target.ActorID);
+                            if (IsPlayer){CSHARPRPG.RPGame.PlayerLocation = new Location(){X = Destination.X,Y = Destination.Y};};
                             Console.WriteLine($"{Target.ActorName} Teleported to X{TargetLocation.X}Y{TargetLocation.Y}");
                         }
                     }   
@@ -370,12 +365,12 @@ namespace ActorStructureSpace
         {
             switch (PotionSelected.PotionsEffectTarget)
             {
-                case "TargetSelf":   HandlePotionUse(PotionSelected, [PlayerCharacter], PlayerCharacter); break;
-                case "DamageTarget": HandlePotionUse(PotionSelected, [NpcDefender], PlayerCharacter);break;
-                case "TargetAll":    HandlePotionUse(PotionSelected, [PlayerCharacter, NpcDefender], PlayerCharacter);break;
+                case "TargetSelf":   HandlePotionUse(PotionSelected, [PlayerCharacter], PlayerCharacter, true); break;
+                case "DamageTarget": HandlePotionUse(PotionSelected, [NpcDefender], PlayerCharacter, false); break;
+                case "TargetAll":    HandlePotionUse(PotionSelected, [PlayerCharacter, NpcDefender], PlayerCharacter, true);break;
             }
         }
-        public static void HandlePotionUse(StoreHandleSpace.StorePotions PotionSelected, ActorStruc[] Targets, ActorStruc PotionOwner)
+        public static void HandlePotionUse(StoreHandleSpace.StorePotions PotionSelected, ActorStruc[] Targets, ActorStruc PotionOwner, bool TargetPlayer)
         {
             Random random = new Random();
 
@@ -421,7 +416,7 @@ namespace ActorStructureSpace
                     break;
                     case "Teleport": 
                         Location Destination = new Location(){ X = -1, Y = -1};
-                        HandleTeleport(Destination, Target);
+                        HandleTeleport(Destination, Target, TargetPlayer);
                         Console.WriteLine($"{PotionSelected.PotionsName} Teleports {Target.ActorName} randomly to a new location!");
                     break;
                     case "Deal Random physical Damage": 

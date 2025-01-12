@@ -86,7 +86,7 @@ namespace ObjectHandleSpace
             },   
         };
         public static void SetLocationToObject(Location location, int ObjectIDToReturn){
-            var Object = ObjectList[ObjectIDToReturn];
+            var Object = ObjectList.FirstOrDefault(_ => _.ObjectID == ObjectIDToReturn);
 
             MapHandler.Map[location.X][location.Y] = new(){
                 LocationID = location.X + location.Y,

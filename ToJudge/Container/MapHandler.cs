@@ -303,10 +303,10 @@ namespace MapHandleSpace
                     {
                         var Attack = CSHARPRPG.RPGame.PlayerCharacter.Attacks.MaxBy(_ => _.AttackStrength);
                         Console.WriteLine($"You use {Attack.AttackTitle.TitleName} {Attack.AttackName} against the {Object.ObjectName}.");
-                        if (Attack.AttackStrength > Object.ObjectHealth){
+                        if (Attack.AttackStrength >= Object.ObjectHealth){
                             Console.WriteLine($"Destroyed the {Object.ObjectName} Reducing it to rubble!");
 
-                            ActorHandle.SetLocationToActor(AttemptLocation, 4);
+                            ObjectHandleSpace.ObjectStruc.SetLocationToObject(AttemptLocation, 4);
                             return true;
                         } else {
                             Console.WriteLine($"The {Object.ObjectName} is too tough! Grow stronger to take this down!");

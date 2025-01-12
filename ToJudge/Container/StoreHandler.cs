@@ -142,7 +142,16 @@ namespace StoreHandleSpace
                             CSHARPRPG.RPGame.PlayerCharacter.ActorPotions = CSHARPRPG.RPGame.PlayerCharacter.ActorPotions.Append(selectedPotion).ToArray();
                             CSHARPRPG.RPGame.PlayerCharacter.ActorGold -= selectedPotion.PotionsCost;
                             Store.StoreGold += selectedPotion.PotionsCost;
-                            Console.WriteLine($"You bought {selectedPotion.PotionsName}. Happy drinking!");                            
+                            Console.WriteLine($"You bought {selectedPotion.PotionsName}. Happy drinking!");      
+                            List<StorePotions> UpdatedStorePotions = new List<StorePotions>(){};        
+                            foreach (var Potion in Store.StorePotions)
+                            {
+                                if (Potion.PotionsID != selectedPotion.PotionsID)
+                                {
+                                    Potion.PotionsID = UpdatedStorePotions.Count();
+                                    UpdatedStorePotions.Append(Potion);
+                                }
+                            }              
                         } else {
                             Console.WriteLine("Cant afford that one... mate...");
                         }

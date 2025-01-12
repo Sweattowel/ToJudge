@@ -26,3 +26,4 @@ C:\Users\thomas\Documents\GitHub\ToJudgeProjectFile\ToJudge\obj\Debug\net8.0\ref
 C:\Users\thomas\Documents\GitHub\ToJudgeProjectFile\ToJudge\obj\Debug\net8.0\ToJudge.pdb
 C:\Users\thomas\Documents\GitHub\ToJudgeProjectFile\ToJudge\obj\Debug\net8.0\ToJudge.genruntimeconfig.cache
 C:\Users\thomas\Documents\GitHub\ToJudgeProjectFile\ToJudge\obj\Debug\net8.0\ref\ToJudge.dll
+C:\Users\thomas\Documents\GitHub\ToJudgeProjectFile\ToJudge\obj\Debug\net8.0\ToJudge.sourcelink.json
