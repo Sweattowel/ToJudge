@@ -13,6 +13,7 @@ namespace CSHARPRPG
         static void Main(string[] args)
         {
             HandleStartUp();
+            ActorHandle.LevelActor(PlayerCharacter, true);
             GameLoop();
         }
 

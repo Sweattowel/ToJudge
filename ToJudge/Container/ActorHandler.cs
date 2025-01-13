@@ -183,6 +183,8 @@ namespace ActorStructureSpace
         public int ActorID { get; set; }
         public string ActorRepresentation { get; set; }
         public int ActorLevel { get; set; }
+        public int CurrentXP { get; set; }
+        public int XPToNextLevel { get; set; }
         public int ActorHealth { get; set; }
         public int ActorSpeed { get; set; }
         public int ActorGold { get; set; }
@@ -795,6 +797,7 @@ namespace ActorStructureSpace
             ActorStruc GeneratedActor = new ActorStruc(){
                 ActorID = ActorList.Count + 2,
                 ActorLevel = Level,
+                CurrentXP = 0,
                 ActorRepresentation = "EN",
                 ActorHealth = 0,
                 ActorSpeed = 0,
@@ -825,10 +828,46 @@ namespace ActorStructureSpace
 
             GeneratedActor.ActorHealth = random.Next(GeneratedActor.ActorClass.BaseHealth / 2 , GeneratedActor.ActorClass.BaseHealth);
             GeneratedActor.ActorSpeed = random.Next(GeneratedActor.ActorClass.BaseSpeed / 2 , GeneratedActor.ActorClass.BaseSpeed);
+            GeneratedActor.XPToNextLevel = GetXpToNextLevel(GeneratedActor.ActorLevel);
 
             ActorList.Add(GeneratedActor);
 
             return GeneratedActor;
+        }
+        public static ActorStruc LevelActor(ActorStruc Actor, bool isPlayer)
+        {
+            return new (){
+                ActorID = Actor.ActorID,
+                ActorLevel = Actor.ActorLevel += 1,
+                CurrentXP = Actor.CurrentXP,
+                XPToNextLevel = GetXpToNextLevel(Actor.ActorLevel + 1),
+                ActorRepresentation = isPlayer ? "PL" : "EN",
+                ActorHealth = Actor.ActorHealth += GetPercentOf(Actor.ActorHealth, 10),
+                ActorSpeed = Actor.ActorSpeed += GetPercentOf(Actor.ActorSpeed, 10) + 1,
+                ActorGold = Actor.ActorGold += 200,
+                ActorName = Actor.ActorName,
+                ActorTitle = Actor.ActorTitle,
+                ActorClass = Actor.ActorClass,
+                Attacks = LevelAttacks(Actor.Attacks)
+            };
+
+        }
+        public static AttackStruc[] LevelAttacks(AttackStruc[] Attacks)
+        {
+            for (int i = 0; i < Attacks.Length; i++)
+            {
+                Attacks[i].AttackStrength += GetPercentOf(Attacks[i].AttackStrength, 10);
+                Console.WriteLine(Attacks[i].AttackStrength);
+            }
+            return Attacks;
+        }
+        public static int GetPercentOf(int OriginalValue, int PercentOfOriginalValue)
+        {
+            return (OriginalValue * PercentOfOriginalValue) / 100;
+        }
+        public static int GetXpToNextLevel(int CurrentLevel)
+        {
+            return (int)(Math.Pow(CurrentLevel, 1.5) * 50);
         }
         public static ActorStruc GeneratePlayerCharacter()
         {
@@ -839,6 +878,8 @@ namespace ActorStructureSpace
                 ActorRepresentation = "PL",
                 ActorGold = 100,
                 ActorLevel = 5,
+                CurrentXP = 0,
+                XPToNextLevel = 5
             };
             Console.WriteLine("Welcome to the Character creator! What is your Name!");
             
@@ -1044,7 +1085,7 @@ namespace ActorStructureSpace
             if (DisplayID > -1){
                 Console.WriteLine($"SELECTIONID: {DisplayID}");
             }
-            Console.WriteLine($"Name: {actor.ActorTitle.TitleName} {actor.ActorName} \n Class: {actor.ActorClass.ClassName} Level: {actor.ActorLevel}");
+            Console.WriteLine($"Name: {actor.ActorTitle.TitleName} {actor.ActorName} \n Class: {actor.ActorClass.ClassName} Level: {actor.ActorLevel} XP TO NEXT: {actor.XPToNextLevel}");
             Console.WriteLine($"HP: {actor.ActorHealth} Spd: {actor.ActorSpeed} Gld: {actor.ActorGold}");
             Console.WriteLine("Armour Values");
                 
@@ -1222,6 +1263,12 @@ namespace ActorStructureSpace
             {
                 Console.WriteLine($"Victory! You gain {NpcDefender.ActorGold} gold.");
                 PlayerCharacter.ActorGold += NpcDefender.ActorGold;
+                PlayerCharacter.CurrentXP += NpcDefender.ActorLevel * 50;
+                if (PlayerCharacter.CurrentXP >= PlayerCharacter.XPToNextLevel)
+                {
+                    Console.WriteLine("LEVEL UP!");
+                    PlayerCharacter = LevelActor(PlayerCharacter, true);
+                }
                 return true;
             }
 
