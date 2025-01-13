@@ -294,17 +294,17 @@ namespace ActorStructureSpace
                 TeleportDestinationX = random.Next(0, CSHARPRPG.RPGame.MapWidth);
             }
             // Check if something is there that is dangerous or solid, if solid kill Target unless target is beastly
-            var TargetCell = MapHandler.Map.SelectMany(row => row).FirstOrDefault(cell => cell.WhatIsHereID == Target.ActorID && cell.WhatListToSearch == 1);
-            if (TargetCell == null)
+            var TargetCurrentLocation = MapHandler.Map.SelectMany(row => row).FirstOrDefault(cell => cell.WhatIsHereID == Target.ActorID && cell.WhatListToSearch == 1);
+            if (TargetCurrentLocation == null && !IsPlayer)
             {
                 Console.WriteLine("Target's current location could not be found.");
                 return;
             }
             var WhatIsThere = MapHandler.Map[TeleportDestinationY][TeleportDestinationX];
             Location WhatIsThereLocation = WhatIsThere.Location;
-            var TargetLocation = TargetCell.Location;
+            var TargetLocation = IsPlayer ? CSHARPRPG.RPGame.PlayerLocation : TargetCurrentLocation.Location;
 
-            ObjectHandleSpace.ObjectStruc.SetLocationToObject(WhatIsThere.Location, 0);
+            ObjectHandleSpace.ObjectStruc.SetLocationToObject(TargetLocation, 4);
 
             switch (WhatIsThere.WhatListToSearch)
             {
@@ -319,60 +319,72 @@ namespace ActorStructureSpace
                         }
                         else 
                         {
-                            ActorHandle.SetLocationToActor(TargetLocation, Target.ActorID);
-                            if (IsPlayer){CSHARPRPG.RPGame.PlayerLocation = new Location(){X = Destination.X,Y = Destination.Y};};
+                            
+                            if (IsPlayer){
+                                CSHARPRPG.RPGame.PlayerLocation = new Location(){X = TeleportDestinationX ,Y = TeleportDestinationY};
+                            } else {
+                                ActorHandle.SetLocationToActor(TargetLocation, Target.ActorID);
+                            }
                             Console.WriteLine($"{Target.ActorName} Teleported to X{TargetLocation.X}Y{TargetLocation.Y}");
                         }
                     }     
                 break;
                 case 1:
-                    var EnemyHere = ObjectHandleSpace.ObjectStruc.ObjectList.First(_ => _.ObjectID == WhatIsThere.WhatIsHereID); 
-                    if (EnemyHere.ObjectIsDangerous)
+                    var EnemyHere = ActorHandle.ActorList.First(_ => _.ActorID == WhatIsThere.WhatIsHereID); 
+              
+                    if (EnemyHere.ActorHealth >= Target.ActorHealth)
                     {
-                        if (EnemyHere.ObjectStrength >= Target.ActorHealth)
-                        {
-                            Target.ActorHealth = 0;
-                            Console.WriteLine($"{Target.ActorName} Died during teleport due to {EnemyHere.ObjectName}");
-                        }
-                        else 
-                        {
+                        Target.ActorHealth = 0;
+                        Console.WriteLine($"{Target.ActorName} Died during teleport due to {EnemyHere.ActorName}");
+                    }
+                    else 
+                    {
+                        if (IsPlayer){
+                            CSHARPRPG.RPGame.PlayerLocation = new Location(){X = TeleportDestinationX ,Y = TeleportDestinationY};
+                        } else {
                             ActorHandle.SetLocationToActor(TargetLocation, Target.ActorID);
-                            if (IsPlayer){CSHARPRPG.RPGame.PlayerLocation = new Location(){X = Destination.X,Y = Destination.Y};};
-                            Console.WriteLine($"{Target.ActorName} Teleported to X{TargetLocation.X}Y{TargetLocation.Y}");
                         }
-                    }     
+                        Console.WriteLine($"{Target.ActorName} Teleported to X{TargetLocation.X}Y{TargetLocation.Y}");
+                    }
+                       
                 break;
                 case 2:
-                    var StoreHere = ObjectHandleSpace.ObjectStruc.ObjectList.First(_ => _.ObjectID == WhatIsThere.WhatIsHereID); 
-                    if (StoreHere.ObjectIsDangerous)
+                    var StoreHere = StoreHandleSpace.StoreStruc.StoreList.FirstOrDefault(_ => _.StoreID == WhatIsThere.WhatIsHereID); 
+                    if (StoreHere.StoreIsDangerous)
                     {
-                        if (StoreHere.ObjectStrength >= Target.ActorHealth)
+                        if (StoreHere.StoreStrength >= Target.ActorHealth)
                         {
                             Target.ActorHealth = 0;
-                            Console.WriteLine($"{Target.ActorName} Died during teleport due to {StoreHere.ObjectName}");
+                            Console.WriteLine($"{Target.ActorName} Died during teleport due to {StoreHere.StoreName}");
                         }
                         else 
                         {
-                            ActorHandle.SetLocationToActor(TargetLocation, Target.ActorID);
-                            if (IsPlayer){CSHARPRPG.RPGame.PlayerLocation = new Location(){X = Destination.X,Y = Destination.Y};};
+                            if (IsPlayer){
+                                CSHARPRPG.RPGame.PlayerLocation = new Location(){X = TeleportDestinationX ,Y = TeleportDestinationY};
+                            } else {
+                                ActorHandle.SetLocationToActor(TargetLocation, Target.ActorID);
+                            }
                             Console.WriteLine($"{Target.ActorName} Teleported to X{TargetLocation.X}Y{TargetLocation.Y}");
                         }
                     }   
                 break;
             }
         }
-        public static void UsePotion(StoreHandleSpace.StorePotions PotionSelected, ActorStruc PlayerCharacter, ActorStruc NpcDefender)
+        public static bool UsePotion(StoreHandleSpace.StorePotions PotionSelected, ActorStruc PlayerCharacter, ActorStruc NpcDefender)
         {
+            bool usedTeleport = true;
             switch (PotionSelected.PotionsEffectTarget)
             {
-                case "TargetSelf":   HandlePotionUse(PotionSelected, [PlayerCharacter], PlayerCharacter, true); break;
-                case "DamageTarget": HandlePotionUse(PotionSelected, [NpcDefender], PlayerCharacter, false); break;
-                case "TargetAll":    HandlePotionUse(PotionSelected, [PlayerCharacter, NpcDefender], PlayerCharacter, true);break;
+                case "TargetSelf":   usedTeleport = HandlePotionUse(PotionSelected, [PlayerCharacter], PlayerCharacter, true); break;
+                case "DamageTarget": usedTeleport = HandlePotionUse(PotionSelected, [NpcDefender], PlayerCharacter, false); break;
+                case "TargetAll":    usedTeleport = HandlePotionUse(PotionSelected, [PlayerCharacter, NpcDefender], PlayerCharacter, true); break;
             }
+            return usedTeleport;
         }
-        public static void HandlePotionUse(StoreHandleSpace.StorePotions PotionSelected, ActorStruc[] Targets, ActorStruc PotionOwner, bool TargetPlayer)
+        public static bool HandlePotionUse(StoreHandleSpace.StorePotions PotionSelected, ActorStruc[] Targets, ActorStruc PotionOwner, bool TargetPlayer)
         {
             Random random = new Random();
+            bool usedTeleport = false;
 
             foreach (var Target in Targets)
             {
@@ -396,11 +408,11 @@ namespace ActorStructureSpace
                         List<AttackStruc> NewAttacks = new List<AttackStruc>(){};
                         for (int i = 0; i < Target.Attacks.Length; i++)
                         {
-                            NewAttacks.Append(Target.Attacks[i]);
+                            NewAttacks.Add(Target.Attacks[i]);
                         }
-                        NewAttacks.Append(AttackStruc.GenerateAttack(random, Target.ActorLevel * PotionSelected.PotionsStrength / 2, Target.ActorClass.ClassType));
+                        NewAttacks.Add(AttackStruc.GenerateAttack(random, Target.ActorLevel * PotionSelected.PotionsStrength / 2, Target.ActorClass.ClassType));
                         Target.Attacks = NewAttacks.ToArray();
-                        Console.WriteLine($"{PotionSelected.PotionsName} Gave {Target.Attacks[Target.Attacks.Length].AttackName} to {Target.ActorName}!");
+                        Console.WriteLine($"{PotionSelected.PotionsName} Gave {Target.Attacks[Target.Attacks.Length - 1].AttackName} to {Target.ActorName}!");
                     break;
                     case "IncreaseStat": 
                         if (Target.Attacks.Length > 0)
@@ -417,6 +429,7 @@ namespace ActorStructureSpace
                     case "Teleport": 
                         Location Destination = new Location(){ X = -1, Y = -1};
                         HandleTeleport(Destination, Target, TargetPlayer);
+                        usedTeleport = true;
                         Console.WriteLine($"{PotionSelected.PotionsName} Teleports {Target.ActorName} randomly to a new location!");
                     break;
                     case "Deal Random physical Damage": 
@@ -447,6 +460,8 @@ namespace ActorStructureSpace
                 }
             }
             PotionOwner.ActorPotions = NewPotions.ToArray();
+
+            return usedTeleport;
         }   
     }
 
@@ -755,7 +770,7 @@ namespace ActorStructureSpace
         public static void SetLocationToActor(Location location, int ActorIDToReturn){
             var Actor = ActorList[ActorIDToReturn];
 
-            MapHandler.Map[location.X][location.Y] = new(){
+            MapHandler.Map[location.Y][location.X] = new(){
                 LocationID = location.X + location.Y,
                 CanPass = false,
                 Location = new Location() { X = location.X, Y = location.Y },
@@ -1066,163 +1081,170 @@ namespace ActorStructureSpace
                 }
             }
         }
-        public static bool BeginFight(ActorStruc PlayerCharacter, ActorStruc NpcDefender, Location NpcLocation)
+        public static bool BeginFight(ActorStruc PlayerCharacter, ActorStruc NpcDefender, Location NpcLocation, Location CurrentPlayerLocation)
         {
             bool PlayerTurn = PlayerCharacter.ActorSpeed >= NpcDefender.ActorSpeed;
             bool ContinueFight = true;
-            Location NpcLocationSave = new Location(){X = NpcLocation.X, Y = NpcLocation.Y};
 
             Console.WriteLine("-------------------------------------------------------------------------------------------------------------------");
             Console.WriteLine($"You encounter an enemy {(!PlayerTurn ? "They are Faster!" : "They are Slower!")}");
             DisplayActorData(NpcDefender, -1);
 
-            while (ContinueFight && PlayerCharacter.ActorHealth > 0 && NpcDefender.ActorHealth > 0 && NpcLocationSave.X == NpcLocation.X && NpcLocationSave.Y == NpcLocation.Y)
-            {   
-                
+            while (ContinueFight && PlayerCharacter.ActorHealth > 0 && NpcDefender.ActorHealth > 0)
+            {
+                // Check for teleportation
                 while (PlayerTurn)
                 {
                     ActorStruc.ApplyCooling(PlayerCharacter.Attacks);
                     Console.WriteLine("---------------------------------------------------------------------");
-                    Console.WriteLine("Select your attack by typing its ID!\n type viewE to see enemy sheet \n Type viewM to view your own sheet \n Type Con to see Items \n type Flee to run!");
-                    
+                    Console.WriteLine("Select your attack by typing its ID!");
+                    Console.WriteLine("Type 'insp' to see enemy sheet, 'inv' to view your own sheet, 'con' to use items, or 'flee' to run!");
+
                     for (int i = 0; i < PlayerCharacter.Attacks.Length; i++)
                     {
                         var attack = PlayerCharacter.Attacks[i];
-                        Console.WriteLine($"     SelectionID: {i + 1}"); 
-                        Console.WriteLine($"     Name: {attack.AttackTitle.TitleName} {attack.AttackName} Damage: {attack.AttackStrength}");
-                        Console.WriteLine($"     Range: {attack.AttackRange} Type: {attack.AttackType} CD: {attack.MaxCool}");
-                        Console.WriteLine($"     MaxCooldown: {attack.MaxCool} {(attack.CurrentCool > 0 ? $"COOLING: {attack.CurrentCool} Turns left" : "READY")}");
-                        Console.WriteLine();
+                        Console.WriteLine($"ID: {i + 1}, Name: {attack.AttackTitle.TitleName}-{attack.AttackName}, Damage: {attack.AttackStrength}");
+                        Console.WriteLine($"TYPE: {attack.AttackType} CD: {attack.MaxCool} {(attack.CurrentCool > 0 ? $"(Cooling: {attack.CurrentCool})" : "(Ready)")}");
                     }
 
                     var AttackChoice = Console.ReadLine()?.Trim().ToLower();
 
-                    if (AttackChoice.Equals("flee", StringComparison.OrdinalIgnoreCase))
+                    if (AttackChoice == "flee")
                     {
                         ContinueFight = false;
                         break;
-                    } 
-                    else if (AttackChoice.Equals("viewE", StringComparison.OrdinalIgnoreCase))
+                    }
+                    else if (AttackChoice == "insp")
                     {
                         DisplayActorData(NpcDefender, -1);
-                    } else if (AttackChoice.Equals("ViewM", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    }
+                    else if (AttackChoice == "inv")
                     {
                         DisplayActorData(PlayerCharacter, -1);
-                    } 
-                    else if (AttackChoice.Equals("Con", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    }
+                    else if (AttackChoice == "con")
                     {
                         DisplayActorPotions(PlayerCharacter);
-                        Console.WriteLine("Choose a potion or cancel with r");
+                        Console.WriteLine("Choose a potion or type 'r' to cancel.");
                         var PotionChoice = Console.ReadLine()?.Trim().ToLower();
-                        if (PotionChoice.Equals("r", StringComparison.OrdinalIgnoreCase))
+
+                        if (PotionChoice == "r") continue;
+
+                        if (int.TryParse(PotionChoice, out int PotionIndex) && PotionIndex >= 0 && PotionIndex < PlayerCharacter.ActorPotions.Length)
                         {
-                            break;
-                        } else {
-                            var PotionIndex = int.Parse(PotionChoice);
-                            if (PotionIndex.GetType() == typeof(int) )
+                            if (!ActorStruc.UsePotion(PlayerCharacter.ActorPotions[PotionIndex], PlayerCharacter, NpcDefender))
                             {
-                                var PotionSelected = PlayerCharacter.ActorPotions[int.Parse(PotionChoice)];
-                                ActorStruc.UsePotion(PotionSelected, PlayerCharacter, NpcDefender);                 
-                                PlayerTurn = false; 
-                                break;               
+                                PlayerTurn = false;
                             } else {
-                                Console.WriteLine("Blunder, Potion does not exist!");
-                                PlayerTurn = false;
-                                break;
-                            }
-
-                        }
-                    }
-
-                    int ChosenIndex = 0;
-
-                    if (int.TryParse(AttackChoice, out ChosenIndex))
-                    {
-                        ChosenIndex--; 
-                        if (ChosenIndex >= 0 && ChosenIndex < PlayerCharacter.Attacks.Length)
-                        {
-                            AttackStruc CurrentAttack = PlayerCharacter.Attacks[ChosenIndex];
-
-                            if (CurrentAttack.CurrentCool == 0)
-                            {
-                                int Damage = ActorStruc.CalculateDamage(CurrentAttack, PlayerCharacter, NpcDefender);
-                                Console.WriteLine($"You attack {NpcDefender.ActorName} with {CurrentAttack.AttackName} of Type {CurrentAttack.AttackType} dealing {Damage} Damage!");
-                                Console.WriteLine($"Their health falls from {NpcDefender.ActorHealth} to {NpcDefender.ActorHealth - Damage}");
-                                NpcDefender.ActorHealth -= Damage;
-
-                                if (NpcDefender.ActorHealth <= 0)
-                                {
-                                    Console.WriteLine($"{NpcDefender.ActorName} has been defeated!");
-                                    ContinueFight = false; 
-                                    break;
-                                }
-                                else
-                                {
-                                    CurrentAttack.CurrentCool = CurrentAttack.MaxCool;
-                                    PlayerTurn = false;        
-                                    break;                         
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine("Blunder, Attack is still cooling down!");
-                                PlayerTurn = false;
+                                ContinueFight = false;
                                 break;
                             }
                         }
                         else
                         {
-                            Console.WriteLine("Invalid selection. Please choose a valid attack.");
+                            Console.WriteLine("Invalid potion selection.");
+                        }
+                        continue;
+                    }
+
+                    if (int.TryParse(AttackChoice, out int ChosenIndex))
+                    {
+                        ChosenIndex--;
+                        if (ChosenIndex >= 0 && ChosenIndex < PlayerCharacter.Attacks.Length)
+                        {
+                            var CurrentAttack = PlayerCharacter.Attacks[ChosenIndex];
+                            if (CurrentAttack.CurrentCool == 0)
+                            {
+                                int Damage = ActorStruc.CalculateDamage(CurrentAttack, PlayerCharacter, NpcDefender);
+                                Console.WriteLine($"You attack {NpcDefender.ActorName} with {CurrentAttack.AttackName}, dealing {Damage} damage!");
+                                NpcDefender.ActorHealth -= Damage;
+                                Console.WriteLine($"Their Health is now {NpcDefender.ActorHealth}!");
+
+                                if (NpcDefender.ActorHealth <= 0)
+                                {
+                                    Console.WriteLine($"{NpcDefender.ActorName} has been defeated!");
+                                    ContinueFight = false;
+                                    break;
+                                }
+
+                                CurrentAttack.CurrentCool = CurrentAttack.MaxCool;
+                                PlayerTurn = false;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Attack is still cooling down!");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid attack selection.");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("Invalid input. Please select a valid attack ID or type 'Flee'.");
+                        Console.WriteLine("Invalid input. Try again.");
                     }
-
-                    PlayerTurn = false;
                 }
 
-                while (!PlayerTurn)
+                while (!PlayerTurn && ContinueFight)
                 {
-                    ActorStruc.ApplyCooling(NpcDefender.Attacks);
-                    Console.WriteLine($"Enemy turn! {NpcDefender.ActorTitle.TitleName} {NpcDefender.ActorName} Readys to attack");
 
+                    ActorStruc.ApplyCooling(NpcDefender.Attacks);
                     var ChosenAttack = NpcDefender.Attacks.FirstOrDefault(a => a.CurrentCool == 0);
-                    if (ChosenAttack == null)
+
+                    if (ChosenAttack != null)
+                    {
+                        int Damage = ActorStruc.CalculateDamage(ChosenAttack, NpcDefender, PlayerCharacter);
+                        Console.WriteLine($"{NpcDefender.ActorName} attacks you with {ChosenAttack.AttackName}, dealing {Damage} damage!");
+                        PlayerCharacter.ActorHealth -= Damage;
+                        Console.WriteLine($"Your Health is now {PlayerCharacter.ActorHealth}!");
+                        if (PlayerCharacter.ActorHealth <= 0)
+                        {
+                            Console.WriteLine("You have been defeated!");
+                            ContinueFight = false;
+                            break;
+                        }
+
+                        ChosenAttack.CurrentCool = ChosenAttack.MaxCool;
+                        PlayerTurn = true;
+                    }
+                    else
                     {
                         Console.WriteLine("Enemy blunders their turn!");
                         PlayerTurn = true;
-                        break;
                     }
-                    int Damage = ActorStruc.CalculateDamage(ChosenAttack, NpcDefender, PlayerCharacter);
-                    
-                    Console.WriteLine($"{NpcDefender.ActorName} attacks you with {ChosenAttack.AttackName} of Type {ChosenAttack.AttackType} dealing {Damage} Damage!");
-                    Console.WriteLine($"Your health falls from {PlayerCharacter.ActorHealth} to {PlayerCharacter.ActorHealth - Damage}");
+                }
+            }
 
-                    NpcDefender.Attacks.First(_ => _.AttackID == ChosenAttack.AttackID).CurrentCool = ChosenAttack.MaxCool;
-                    PlayerTurn = true;
-                }                
-            }
-            if (NpcLocationSave.X != NpcLocation.X || NpcLocationSave.Y != NpcLocation.Y)
-            {
-                Console.WriteLine("Npc has dissapeared, Battle is over");
-                return true;
-            }
             if (PlayerCharacter.ActorHealth > 0 && NpcDefender.ActorHealth <= 0)
             {
-                ObjectHandleSpace.ObjectStruc.SetLocationToObject(NpcLocation, 0);
-                Console.WriteLine($"BIG VICTORY! You gain {NpcDefender.ActorGold} Gld");
+                Console.WriteLine($"Victory! You gain {NpcDefender.ActorGold} gold.");
                 PlayerCharacter.ActorGold += NpcDefender.ActorGold;
-                MapHandler.GivePlayerMovementControls(CSHARPRPG.RPGame.PlayerLocation);
                 return true;
-                
-            } else {
-                Console.WriteLine("Game over...");
-                return false;
             }
+
+            if (PlayerCharacter.ActorHealth <= 0)
+            {
+                Console.WriteLine("Game Over.");
+            }
+
+            return false;
         }
-    
+
+        public static bool CheckForTeleportation(ActorStruc Npc, Location Player, Location fightLocation)
+        {
+            var NPCLOCATION = MapHandler.Map
+            .SelectMany(row => row)
+            .FirstOrDefault(cell => cell.WhatIsHereID == Npc.ActorID && cell.WhatListToSearch == 1);
+            if (NPCLOCATION == null)
+            {
+                Console.WriteLine("NPC location not found on the map.");
+                return true;
+            }
+            return NPCLOCATION.Location.X != fightLocation.X || NPCLOCATION.Location.Y != fightLocation.Y || Player.X != fightLocation.X || Player.Y != fightLocation.Y;
+        }
     }
 
 }

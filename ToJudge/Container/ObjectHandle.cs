@@ -87,8 +87,14 @@ namespace ObjectHandleSpace
         };
         public static void SetLocationToObject(Location location, int ObjectIDToReturn){
             var Object = ObjectList.FirstOrDefault(_ => _.ObjectID == ObjectIDToReturn);
+            if ( Object == null )
+            {
+                Console.WriteLine("Object at SetLocationToObject does not exist and is null");
+                return;
+            }
+            Console.WriteLine($"Setting X{location.X}Y{location.Y} {Object.ObjectName}");
 
-            MapHandler.Map[location.X][location.Y] = new(){
+            MapHandler.Map[location.Y][location.X] = new(){
                 LocationID = location.X + location.Y,
                 CanPass = Object.CanPass,
                 Location = new Location() { X = location.X, Y = location.Y },

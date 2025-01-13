@@ -7,8 +7,8 @@ namespace CSHARPRPG
     {
         public static ActorStructureSpace.ActorStruc PlayerCharacter = new ActorStructureSpace.ActorStruc(){};
         public static Location PlayerLocation = new Location(){X = -1, Y = -1};
-        public static int MapHeight = 40;
-        public static int MapWidth = 40;
+        public static int MapHeight = 20;
+        public static int MapWidth = 80;
         public static int StartLevel = 5;
         static void Main(string[] args)
         {

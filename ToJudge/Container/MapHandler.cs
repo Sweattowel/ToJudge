@@ -63,8 +63,10 @@ namespace MapHandleSpace
                         POSSESSEDWATER 5
                         RUBBLE 4
                     */
+                    
                     switch (CurrentNoise)
                     {
+                        
                         case < 2:
                             CurrentPosition = GenerateStore(random, x, y);
                             break;
@@ -242,7 +244,7 @@ namespace MapHandleSpace
                 Y = CurrentPlayerLocation.Y + Vector[0]
             };
             
-            
+            Console.WriteLine($"Player located at X:{NewPlayerLocation.X}Y:{NewPlayerLocation.Y}");
             switch (NewLocationData.WhatListToSearch)
             {
                 case 0:
@@ -273,10 +275,10 @@ namespace MapHandleSpace
         }
         public static bool SearchActors(int ActorID, Location PrevLocation, Location AttemptLocation)
         {
-            var result = ActorHandle.BeginFight(CSHARPRPG.RPGame.PlayerCharacter, ActorHandle.ActorList.Find(_ => _.ActorID == ActorID), PrevLocation);
+            var result = ActorHandle.BeginFight(CSHARPRPG.RPGame.PlayerCharacter, ActorHandle.ActorList.Find(_ => _.ActorID == ActorID), PrevLocation, CSHARPRPG.RPGame.PlayerLocation);
             if (result)
             {
-                ObjectHandleSpace.ObjectStruc.SetLocationToObject(AttemptLocation, ActorID);
+                ObjectHandleSpace.ObjectStruc.SetLocationToObject(AttemptLocation, 0);
                 return true;
             }
             return false;
