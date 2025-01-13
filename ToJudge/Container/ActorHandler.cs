@@ -251,7 +251,7 @@ namespace ActorStructureSpace
                     if (ChosenAttack.AttackRange == 1) {Damage = Damage * 2 / 100 * 110;};
                 break;
                 case "Resilient" :
-                    ActorAttacker.ActorHealth += ActorAttacker.ActorHealth / 100 * 5;
+                    ActorAttacker.ActorHealth += ActorAttacker.ActorHealth * 5 / 100 ;
                 break;
                 case "Vile" :
                     if (ActorDefender.ActorLevel < ActorAttacker.ActorLevel || ActorDefender.ActorGold < ActorAttacker.ActorGold){ Damage = Damage * 2 / 100 * 110;};
@@ -383,7 +383,7 @@ namespace ActorStructureSpace
             }
             return usedTeleport;
         }
-        public static bool HandlePotionUse(StoreHandleSpace.StorePotions PotionSelected, ActorStruc[] Targets, ActorStruc PotionOwner, bool TargetPlayer)
+        public static bool HandlePotionUse(StoreHandleSpace.StorePotions PotionSelected, ActorStruc[] Targets, ActorStruc PotionOwner, bool isPlayer)
         {
             Random random = new Random();
             bool usedTeleport = false;
@@ -392,7 +392,7 @@ namespace ActorStructureSpace
             {
                 switch (PotionSelected.PotionsEffect)
                 {
-                    case "IncreaseLevel": Target.ActorLevel += PotionSelected.PotionsStrength; break;
+                    case "IncreaseLevel": ActorHandle.LevelActor(Target, isPlayer); break;
                     case "IncreasePhysDefense": 
                             Target.ActorArmour.Slash += PotionSelected.PotionsStrength / 4;
                             Target.ActorArmour.Strike += PotionSelected.PotionsStrength / 4;
@@ -430,7 +430,7 @@ namespace ActorStructureSpace
                     break;
                     case "Teleport": 
                         Location Destination = new Location(){ X = -1, Y = -1};
-                        HandleTeleport(Destination, Target, TargetPlayer);
+                        HandleTeleport(Destination, Target, isPlayer);
                         usedTeleport = true;
                         Console.WriteLine($"{PotionSelected.PotionsName} Teleports {Target.ActorName} randomly to a new location!");
                     break;
@@ -863,7 +863,7 @@ namespace ActorStructureSpace
         }
         public static int GetPercentOf(int OriginalValue, int PercentOfOriginalValue)
         {
-            return (OriginalValue * PercentOfOriginalValue) / 100;
+            return OriginalValue * PercentOfOriginalValue / 100;
         }
         public static int GetXpToNextLevel(int CurrentLevel)
         {
@@ -1134,7 +1134,7 @@ namespace ActorStructureSpace
             while (ContinueFight && PlayerCharacter.ActorHealth > 0 && NpcDefender.ActorHealth > 0)
             {
                 // Check for teleportation
-                while (PlayerTurn)
+                while (PlayerTurn && ContinueFight && PlayerCharacter.ActorHealth > 0)
                 {
                     ActorStruc.ApplyCooling(PlayerCharacter.Attacks);
                     Console.WriteLine("---------------------------------------------------------------------");
@@ -1229,7 +1229,7 @@ namespace ActorStructureSpace
                     }
                 }
 
-                while (!PlayerTurn && ContinueFight)
+                while (!PlayerTurn && ContinueFight && NpcDefender.ActorHealth > 0)
                 {
 
                     ActorStruc.ApplyCooling(NpcDefender.Attacks);

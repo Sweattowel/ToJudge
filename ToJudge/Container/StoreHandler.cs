@@ -15,7 +15,7 @@ namespace StoreHandleSpace
             { 0, new Dictionary<string, string> { {"Virulent","Increase Effect by 10%"} } },
             { 1, new Dictionary<string, string> { {"Unsealed","Effect will affect user"} } },
             { 2, new Dictionary<string, string> { {"Diluted","Effect is diminished"} } },
-            { 3, new Dictionary<string, string> { {"Unlicensed","Effect randomised with chance at extra effect"} } },
+            { 3, new Dictionary<string, string> { {"Unlicensed","Potion DESC removed"} } },
             { 4, new Dictionary<string, string> { {"Factory new","Gold value increased"} } },
         };
         public static Dictionary<int, Dictionary<string, int>> PotionEffects = new Dictionary<int, Dictionary<string, int>>
@@ -42,6 +42,7 @@ namespace StoreHandleSpace
         {
             List<StorePotions> GeneratedPotions = new List<StorePotions>();
             int Level = CSHARPRPG.RPGame.StartLevel;
+
             for ( int i = 0; i < Math.Min(8, Level * 2); i++)
             {
                 var randomKeyTitle = random.Next(1, 5);
@@ -59,10 +60,8 @@ namespace StoreHandleSpace
 
                 var potionEffect = randomEffect.Keys.First();
                 var potionEffectStrength = randomEffect.Values.First();
-                
 
-                GeneratedPotions.Add(new()
-                {
+                StorePotions newPotion = new StorePotions(){
                     PotionsID = i,
                     PotionsTitle = title,
                     PotionsName = potionName,
@@ -70,7 +69,28 @@ namespace StoreHandleSpace
                     PotionsEffectTarget = potionEffectTarget,
                     PotionsStrength = random.Next(1, potionEffectStrength * Level * 2),
                     PotionsCost = random.Next(10, potionEffectStrength * Level * 5),
-                });                
+                };  
+                
+                switch (randomTitle.ToString())
+                {
+                    case "Virulent" :
+                        newPotion.PotionsStrength += potionEffectStrength * 10 / 100;
+                        break;
+                    case "Unsealed" :
+                        newPotion.PotionsEffectTarget = "TargetAll";
+                        break;
+                    case "Diluted" :
+                        newPotion.PotionsStrength -= potionEffectStrength * 10 / 100;
+                        break;
+                    case "Unlicensed" :
+                        newPotion.PotionsEffect = "Potion label empty";
+                        break;
+                    case "Factory new" :
+                        newPotion.PotionsCost += newPotion.PotionsCost * 10 / 100;
+                        break;
+                }
+                GeneratedPotions.Add(newPotion);   
+                           
             }
 
 

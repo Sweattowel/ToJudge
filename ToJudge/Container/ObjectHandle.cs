@@ -18,7 +18,7 @@ namespace ObjectHandleSpace
                 ObjectID = 0,
                 ObjectHealth = 99999,
                 ObjectName = "Air",
-                ObjectRepresentation = "||",
+                ObjectRepresentation = "__",
                 ObjectIsDangerous = false,
                 ObjectStrength = 0,
                 CanPass = true,
